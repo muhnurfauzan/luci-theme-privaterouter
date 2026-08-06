@@ -1,0 +1,38 @@
+name: build-packages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}-${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64]
+        version: [25.12.5]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Build packages with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.arch }}-${{ matrix.version }}
+          PACKAGES: luci-theme-oat luci-mod-dashboard luci-mod-simple
+          NO_REFRESH_CHECK: true
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.arch }}-${{ matrix.version }}-packages
+          path: |
+            bin/packages/${{ matrix.arch }}/action/*.ipk
+            bin/packages/${{ matrix.arch }}/action/*.apk
